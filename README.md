@@ -8,6 +8,7 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: kubernetes-talk
+EOF
 
 # Apply yaml to the cluster
 kubectl apply -f namespace.yaml
@@ -42,6 +43,7 @@ spec:
         image: 702141274116.dkr.ecr.us-east-1.amazonaws.com/kubernetes-talk:v1
         ports:
         - containerPort: 3000
+EOF
 
 # Apply yaml to the cluster
 kubectl apply -f deployment.yaml -n kubernetes-talk
@@ -105,6 +107,7 @@ spec:
         envFrom:
         - configMapRef:
             name: kubernetes-talk-config
+EOF
 
 # Apply yaml to the cluster
 kubectl apply -f deployment.yaml -n kubernetes-talk
