@@ -119,6 +119,106 @@ kubectl port-forward deployment/kubernetes-talk 3000:3000 -n kubernetes-talk
 curl localhost:3000
 ```
 
+## Create Deployment v3
 
-# TODO: Nova versão do app que falha propositalmente após X segundos, e configuração do liveness probe
-# TODO Configuração de um service que vai expor o app publicamente
+```sh
+# Create deployment yaml
+cat <<EOF > deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubernetes-talk-deployment
+  labels:
+    app: kubernetes-talk
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kubernetes-talk
+  template:
+    metadata:
+      labels:
+        app: kubernetes-talk
+    spec:
+      containers:
+      - name: kubernetes-talk-container
+        image: 702141274116.dkr.ecr.us-east-1.amazonaws.com/kubernetes-talk:v2
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: kubernetes-talk-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 3
+          periodSeconds: 5
+EOF
+
+# Apply yaml to the cluster
+kubectl apply -f deployment.yaml -n kubernetes-talk
+
+# Describe deployment 
+kubectl describe deployment kubernetes-talk -n kubernetes-talk
+
+# Make request to the deployment
+curl localhost:3000
+```
+
+## Create Service 
+
+```sh
+# Create service yaml
+cat <<EOF > service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-talk 
+spec:
+  selector:
+    app: kubernetes-talk
+  ports:
+    - name: http
+      port: 3000
+  type: ClusterIP
+EOF
+
+# Apply yaml to the cluster
+kubectl apply -f service.yaml -n kubernetes-talk
+
+# Describe deployment 
+kubectl get service kubernetes-talk -n kubernetes-talk
+```
+
+## Create Ingress
+
+```sh
+# Create service yaml
+cat <<EOF > ingress.yaml
+apiVersion: networking.k8s.io/v1beta1
+ kind: Ingress
+ metadata:
+   name: kubernetes-talk
+   annotations:
+     nginx.ingress.kubernetes.io/rewrite-target: /$1
+ spec:
+   rules:
+   - host: kubernetes-talk.k8s.paretoquantic.com
+     http:
+       paths:
+       - path: /
+         backend:
+           serviceName: kubernetes-talk
+           servicePort: 3000
+EOF
+
+# Apply yaml to the cluster
+kubectl apply -f ingress.yaml -n kubernetes-talk
+
+# Describe deployment 
+kubectl get ingress kubernetes-talk -n kubernetes-talk
+
+# Try to make a request. Why doesn't it work? 
+curl kubernetes-talk.k8s.paretoquantic.com
+```
