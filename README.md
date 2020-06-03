@@ -208,7 +208,7 @@ kubectl get service kubernetes-talk -n kubernetes-talk
 ```sh
 # Create ingress yaml
 cat <<EOF > ingress.yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: kubernetes-talk
