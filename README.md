@@ -51,8 +51,14 @@ kubectl apply -f deployment.yaml -n kubernetes-talk
 # Check deployment status and number of pods
 kubectl get deployment kubernetes-talk-deployment -n kubernetes-talk
 
+# Check pods
+kubectl get pods -n kubernetes-talk
+
+# Check logs of a pod 
+kubectl logs <pod> -n kubernetes-talk
+
 # Port Forward
-kubectl port-forward deployment/kubernetes-talk 3000:3000 -n kubernetes-talk
+kubectl port-forward deployment/kubernetes-talk-deployment 3000:3000 -n kubernetes-talk
 
 # Make request to the deployment
 curl localhost:3000
@@ -76,6 +82,9 @@ EOF
 
 # Apply yaml to the cluster
 kubectl apply -f config-map.yaml -n kubernetes-talk
+
+# Describe ConfigMap
+kubectl describe configmap kubernetes-talk-config -n kubernetes-talk
 ```
 
 ## Create Deployment v2
@@ -112,8 +121,11 @@ EOF
 # Apply yaml to the cluster
 kubectl apply -f deployment.yaml -n kubernetes-talk
 
+# Check deployment status and number of pods
+kubectl describe deployment kubernetes-talk-deployment -n kubernetes-talk
+
 # Port Forward
-kubectl port-forward deployment/kubernetes-talk 3000:3000 -n kubernetes-talk
+kubectl port-forward deployment/kubernetes-talk-deployment 3000:3000 -n kubernetes-talk
 
 # Make request to the deployment
 curl localhost:3000
@@ -162,8 +174,8 @@ kubectl apply -f deployment.yaml -n kubernetes-talk
 # Describe deployment 
 kubectl describe deployment kubernetes-talk -n kubernetes-talk
 
-# Make request to the deployment
-curl localhost:3000
+# Get pods
+kubectl get pods -n kubernetes-talk
 ```
 
 ## Create Service 
@@ -187,30 +199,30 @@ EOF
 # Apply yaml to the cluster
 kubectl apply -f service.yaml -n kubernetes-talk
 
-# Describe deployment 
+# Get service 
 kubectl get service kubernetes-talk -n kubernetes-talk
 ```
 
 ## Create Ingress
 
 ```sh
-# Create service yaml
+# Create ingress yaml
 cat <<EOF > ingress.yaml
 apiVersion: networking.k8s.io/v1beta1
- kind: Ingress
- metadata:
-   name: kubernetes-talk
-   annotations:
-     nginx.ingress.kubernetes.io/rewrite-target: /$1
- spec:
-   rules:
-   - host: kubernetes-talk.k8s.paretoquantic.com
-     http:
-       paths:
-       - path: /
-         backend:
-           serviceName: kubernetes-talk
-           servicePort: 3000
+kind: Ingress
+metadata:
+  name: kubernetes-talk
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: kubernetes-talk.k8s.paretoquantic.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kubernetes-talk
+          servicePort: 3000
 EOF
 
 # Apply yaml to the cluster
@@ -219,6 +231,9 @@ kubectl apply -f ingress.yaml -n kubernetes-talk
 # Describe deployment 
 kubectl get ingress kubernetes-talk -n kubernetes-talk
 
-# Try to make a request. Why doesn't it work? 
+# Try to make a request. Why does it work? 
 curl kubernetes-talk.k8s.paretoquantic.com
+
+# Get Ingress Controller address
+kubectl get service -n default
 ```
